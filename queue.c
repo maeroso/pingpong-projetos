@@ -24,7 +24,6 @@ void queue_append(queue_t **queue, queue_t *elem) {
         *queue = elem;
         (*queue)->prev = *queue;
         (*queue)->next = *queue;
-        return;
     } else {
         elem->next = (*queue);
         elem->prev = (*queue)->prev;
@@ -100,7 +99,7 @@ int queue_size(queue_t *queue) {
 
 void queue_print(char *name, queue_t *queue, void (*print_elem)(void *)) {
     queue_t *iterator;
-    printf("%s", name);
+    printf(name);
     printf("[");
     for (iterator = queue; iterator != NULL;) {
         print_elem(iterator);

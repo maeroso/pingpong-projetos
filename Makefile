@@ -1,2 +1,2 @@
 all:
-	gcc contexts.c -o p01
+	gcc queue.c pingpong.c pingpong-tasks1.c -o p02

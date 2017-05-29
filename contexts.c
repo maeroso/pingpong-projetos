@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
         ContextPing.uc_stack.ss_flags = 0;
         ContextPing.uc_link = 0;
     } else {
-        perror("Erro na criacao da pilha: ");
+        perror("Erro na cria��o da pilha: ");
         exit(1);
     }
 
-    makecontext(&ContextPing, (void *) (&BodyPing), 1, "    Ping");
+    makecontext(&ContextPing, (void (*)(void)) &BodyPing, 1, "    Ping");
 
     getcontext(&ContextPong);
 
@@ -75,11 +75,11 @@ int main(int argc, char *argv[]) {
         ContextPong.uc_stack.ss_flags = 0;
         ContextPong.uc_link = 0;
     } else {
-        perror("Erro na criacao da pilha: ");
+        perror("Erro na cria��o da pilha: ");
         exit(1);
     }
 
-    makecontext(&ContextPong, (void *) (&BodyPong), 1, "        Pong");
+    makecontext(&ContextPong, (void (*)(void)) &BodyPong, 1, "        Pong");
 
     swapcontext(&ContextMain, &ContextPing);
     swapcontext(&ContextMain, &ContextPong);
