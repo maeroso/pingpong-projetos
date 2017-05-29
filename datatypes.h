@@ -26,7 +26,10 @@ typedef struct task_t {
     int priority;
     int dynamic_priority;
     task_category_t category;
-    int ticks;
+    unsigned int ticks;
+    unsigned int activations;
+    unsigned int cpu_time;
+    unsigned int created_at;
 } task_t;
 
 // estrutura que define um semáforo

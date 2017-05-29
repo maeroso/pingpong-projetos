@@ -25,6 +25,8 @@ struct sigaction tick_action;
 
 const int quantum = 20;
 
+unsigned int m_system_time = 0;
+
 void dispatcher_body(void *);
 
 task_t *scheduler_selector(task_t *queue, int aging_factor);
@@ -32,6 +34,8 @@ task_t *scheduler_selector(task_t *queue, int aging_factor);
 task_t *scheduler();
 
 void handler(int signum) {
+    m_system_time++;
+    current_task->cpu_time++;
     if(current_task->category == USER) {
         current_task->ticks--;
         if (current_task->ticks == 0) {
@@ -62,7 +66,6 @@ void pingpong_init() {
     tick_interval.it_value.tv_usec = 1000;
     tick_interval.it_interval.tv_usec = 1000;
     setitimer(ITIMER_REAL, &tick_interval, NULL); //ITIMER_REAL trabalha no tempo "normal", e não no tempo de CPU. Dispara um SIGALRM;
-
 }
 
 int task_create(task_t *task, void (*start_func)(void *), void *arg) {
@@ -80,18 +83,21 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg) {
         task->parent = &dispatcher;
         task->category = USER;
         task->ticks = quantum;
+        task->created_at = systime();
+        task->cpu_time = 0;
         task->id = task->prev->id + 1;
     }
 
-#ifdef DEBUG
-    printf ("\ntask_create: criou tarefa %d", task->tid) ;
-#endif
+//#ifdef DEBUG
+    printf ("\ntask_create: Task %d created at %d ms", task->id, task->created_at) ;
+//#endif
     return task->id;
 }
 
 int task_switch(task_t *task) {
     previous_task = current_task;
     current_task = task;
+    current_task->activations++;
 #ifdef DEBUG
     printf ("\ntask_switch: trocando contexto %d -> %d", previous_task->tid, current_task->tid) ;
 #endif
@@ -101,9 +107,9 @@ int task_switch(task_t *task) {
 }
 
 void task_exit(int exitCode) {
-#ifdef DEBUG
-    printf("\ntask_exit: tarefa %d sendo encerrada", current_task->tid);
-#endif
+//#ifdef DEBUG
+    printf("\ntask_exit: Task %d exit: execution time %d ms, processor time %d ms, %d activations", current_task->id, systime() - current_task->created_at, current_task->cpu_time, current_task->activations);
+//#endif
     task_switch(current_task->parent);
 }
 
@@ -128,6 +134,10 @@ void task_setprio(task_t *task, int prio) {
         task = current_task;
     task->priority = prio;
     task->dynamic_priority = prio;
+}
+
+unsigned int systime() {
+    return m_system_time;
 }
 
 void dispatcher_body(void *arg) // dispatcher é uma tarefa
