@@ -13,6 +13,9 @@ typedef enum {
     SUSPENDED, RUNNING
 } status_t;
 
+typedef enum {
+    SYSTEM, USER
+} task_category_t;
 // Estrutura que define uma tarefa
 typedef struct task_t {
     // preencher quando necessário
@@ -22,6 +25,8 @@ typedef struct task_t {
     struct task_t *parent;
     int priority;
     int dynamic_priority;
+    task_category_t category;
+    int ticks;
 } task_t;
 
 // estrutura que define um semáforo

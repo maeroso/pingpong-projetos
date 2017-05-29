@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
+#include <sys/time.h>
+#include <signal.h>
 #include "datatypes.h"
 #include "pingpong.h"
 #include "queue.h"
@@ -18,6 +20,10 @@ task_t main_task;
 task_t dispatcher;
 
 task_t *ready_queue;
+struct itimerval tick_interval;
+struct sigaction tick_action;
+
+const int quantum = 20;
 
 void dispatcher_body(void *);
 
@@ -25,15 +31,38 @@ task_t *scheduler_selector(task_t *queue, int aging_factor);
 
 task_t *scheduler();
 
+void handler(int signum) {
+    if(current_task->category == USER) {
+        current_task->ticks--;
+        if (current_task->ticks == 0) {
+            task_yield();
+        }
+    }
+}
+
+
 void pingpong_init() {
 /* desativa o buffer da saida padrao (stdout), usado pela função printf */
     setvbuf(stdout, 0, _IONBF, 0);
+
     getcontext(&main_task.context);
     main_task.id = 0;
+    main_task.category = USER;
+
     task_create(&dispatcher, dispatcher_body, NULL);
     dispatcher.parent = &main_task;
-
+    dispatcher.category = SYSTEM;
     current_task = &main_task;
+
+    tick_action.sa_handler = handler;
+    sigemptyset (&tick_action.sa_mask);
+    tick_action.sa_flags = 0;
+    sigaction(SIGALRM, &tick_action, NULL);
+
+    tick_interval.it_value.tv_usec = 1000;
+    tick_interval.it_interval.tv_usec = 1000;
+    setitimer(ITIMER_REAL, &tick_interval, NULL); //ITIMER_REAL trabalha no tempo "normal", e não no tempo de CPU. Dispara um SIGALRM;
+
 }
 
 int task_create(task_t *task, void (*start_func)(void *), void *arg) {
@@ -49,6 +78,8 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg) {
     if (task != &dispatcher) {
         queue_append((queue_t **) &ready_queue, (queue_t *) task);
         task->parent = &dispatcher;
+        task->category = USER;
+        task->ticks = quantum;
         task->id = task->prev->id + 1;
     }
 
@@ -104,6 +135,7 @@ void dispatcher_body(void *arg) // dispatcher é uma tarefa
     while (queue_size((queue_t *) ready_queue) > 0) {
         task_t *next = scheduler(); // scheduler é uma função
         if (next) {
+            next->ticks = quantum;
             task_switch(next); // transfere controle para a tarefa "next"
         }
     }
