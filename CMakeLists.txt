@@ -1,14 +1,22 @@
 cmake_minimum_required(VERSION 3.6)
-project(p02)
+project(p03)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-#set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DDEBUG")
+set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        queue.h queue.c
-        datatypes.h
-        pingpong-tasks1.c
-        pingpong.h pingpong.c)
+        pingpong-dispatcher.c pingpong.c queue.c)
 
-add_executable(p02 ${SOURCE_FILES})
+add_executable(p03 ${SOURCE_FILES})
+
+#[[
+datatypes.h : definições de dados globais (esqueleto: datatypes.h)
+    constantes e macros globais
+    definições dos tipos e estruturas de dados globais
+pingpong.h : interface do SO (fornecido: pingpong.h, não alterar)
+    protótipos das funções públicas
+pingpong.c : contém as definições internas do sistema:
+    constantes e macros internas
+    definições dos tipos e estruturas de dados internas
+    funções internas
+    implementações das funções públicas
+]]

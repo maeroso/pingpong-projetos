@@ -9,12 +9,17 @@
 
 #include <ucontext.h>
 
+typedef enum {
+    SUSPENDED, RUNNING
+} status_t;
+
 // Estrutura que define uma tarefa
 typedef struct task_t {
     // preencher quando necessário
     struct task_t *prev, *next;
     int id;
     ucontext_t context;
+    struct task_t *parent;
 } task_t;
 
 // estrutura que define um semáforo
