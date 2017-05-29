@@ -1,2 +1,2 @@
 all:
-	gcc queue.c testafila.c -o p00
+	gcc contexts.c -o p01
