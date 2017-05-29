@@ -49,13 +49,11 @@ void pingpong_init() {
 /* desativa o buffer da saida padrao (stdout), usado pela função printf */
     setvbuf(stdout, 0, _IONBF, 0);
 
-    getcontext(&main_task.context);
-    main_task.id = 0;
-    main_task.category = USER;
-
     task_create(&dispatcher, dispatcher_body, NULL);
-    dispatcher.parent = &main_task;
     dispatcher.category = SYSTEM;
+    dispatcher.parent = &main_task;
+
+    task_create(&main_task, NULL, NULL);
     current_task = &main_task;
 
     tick_action.sa_handler = handler;
@@ -69,15 +67,14 @@ void pingpong_init() {
 }
 
 int task_create(task_t *task, void (*start_func)(void *), void *arg) {
-    getcontext(&task->context);
-    char *stack = malloc(STACK_SIZE);
-    if (stack) {
-        task->context.uc_stack.ss_sp = stack;
-        task->context.uc_stack.ss_size = STACK_SIZE;
-        task->context.uc_link = NULL;
-    }
-    makecontext(&task->context, (void (*)(void)) start_func, 1, arg);
-
+        getcontext(&task->context);
+        char *stack = malloc(STACK_SIZE);
+        if (stack) {
+            task->context.uc_stack.ss_sp = stack;
+            task->context.uc_stack.ss_size = STACK_SIZE;
+            task->context.uc_link = NULL;
+        }
+        makecontext(&task->context, (void (*)(void)) start_func, 1, arg);
     if (task != &dispatcher) {
         queue_append((queue_t **) &ready_queue, (queue_t *) task);
         task->parent = &dispatcher;
@@ -85,12 +82,13 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg) {
         task->ticks = quantum;
         task->created_at = systime();
         task->cpu_time = 0;
+        task->activations = 0;
         task->id = task->prev->id + 1;
     }
 
-//#ifdef DEBUG
+#ifdef DEBUG
     printf ("\ntask_create: Task %d created at %d ms", task->id, task->created_at) ;
-//#endif
+#endif
     return task->id;
 }
 
@@ -118,7 +116,7 @@ int task_id() {
 }
 
 void task_yield() {
-    if (current_task != &main_task)
+    if (current_task != &dispatcher)
         queue_append((queue_t **) &ready_queue, (queue_t *) current_task);
     task_switch(&dispatcher);
 }
