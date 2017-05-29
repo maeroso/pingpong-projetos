@@ -10,7 +10,7 @@
 #include <ucontext.h>
 
 typedef enum {
-    SUSPENDED, RUNNING
+    SUSPENDED, RUNNING, COMPLETED
 } status_t;
 
 typedef enum {
@@ -22,7 +22,7 @@ typedef struct task_t {
     struct task_t *prev, *next;
     int id;
     ucontext_t context;
-    struct task_t *parent;
+    struct task_t *exit_to;
     int priority;
     int dynamic_priority;
     task_category_t category;
@@ -30,6 +30,9 @@ typedef struct task_t {
     unsigned int activations;
     unsigned int cpu_time;
     unsigned int created_at;
+    status_t status;
+    int exit_code;
+    struct task_t *waiting_on;
 } task_t;
 
 // estrutura que define um semáforo

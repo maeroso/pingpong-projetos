@@ -1,2 +1,2 @@
 all:
-	gcc queue.c pingpong.c pingpong-maintask.c -o p07
+	gcc queue.c pingpong.c pingpong-join.c -o p08
