@@ -99,7 +99,7 @@ int queue_size(queue_t *queue) {
 
 void queue_print(char *name, queue_t *queue, void (*print_elem)(void *)) {
     queue_t *iterator;
-    printf(name);
+    printf("%s", name);
     printf("[");
     for (iterator = queue; iterator != NULL;) {
         print_elem(iterator);

@@ -20,6 +20,8 @@ typedef struct task_t {
     int id;
     ucontext_t context;
     struct task_t *parent;
+    int priority;
+    int dynamic_priority;
 } task_t;
 
 // estrutura que define um semáforo

@@ -19,8 +19,9 @@ task_t dispatcher;
 
 task_t *ready_queue;
 
-
 void dispatcher_body(void *);
+
+task_t *scheduler_selector(task_t *queue, int aging_factor);
 
 task_t *scheduler();
 
@@ -60,7 +61,6 @@ int task_create(task_t *task, void (*start_func)(void *), void *arg) {
 int task_switch(task_t *task) {
     previous_task = current_task;
     current_task = task;
-
 #ifdef DEBUG
     printf ("\ntask_switch: trocando contexto %d -> %d", previous_task->tid, current_task->tid) ;
 #endif
@@ -86,6 +86,19 @@ void task_yield() {
     task_switch(&dispatcher);
 }
 
+int task_getprio(task_t *task) {
+    if (task == NULL)
+        task = current_task;
+    return task->priority;
+}
+
+void task_setprio(task_t *task, int prio) {
+    if (task == NULL)
+        task = current_task;
+    task->priority = prio;
+    task->dynamic_priority = prio;
+}
+
 void dispatcher_body(void *arg) // dispatcher é uma tarefa
 {
     while (queue_size((queue_t *) ready_queue) > 0) {
@@ -98,7 +111,37 @@ void dispatcher_body(void *arg) // dispatcher é uma tarefa
 }
 
 task_t *scheduler() {
-    return (task_t *) queue_remove((queue_t **) &ready_queue, (queue_t *) ready_queue);
+    task_t *highest_priority_task = scheduler_selector(ready_queue, -1);
+    return (task_t *) queue_remove((queue_t **) &ready_queue, (queue_t *) highest_priority_task);
 }
+
+void update_dynamic_priority(task_t *queue, task_t *to_exclude, int aging_factor) {
+    task_t *iterator;
+    for (iterator = queue; iterator != NULL;) {
+        if(iterator != to_exclude)
+            iterator->dynamic_priority += aging_factor;
+        iterator = iterator->next;
+        if (iterator == queue)
+            break;
+    }
+}
+
+task_t *scheduler_selector(task_t *queue, int aging_factor) {
+    task_t *iterator;
+    task_t *selected = NULL;
+    for (iterator = queue; iterator != NULL;) {
+        if (selected == NULL || iterator->dynamic_priority < selected->dynamic_priority)
+            selected = iterator;
+
+        iterator = iterator->next;
+        if (iterator == queue)
+            break;
+    }
+    selected->dynamic_priority = selected->priority;
+    update_dynamic_priority(queue, selected, aging_factor);
+    return selected;
+}
+
+
 
 
